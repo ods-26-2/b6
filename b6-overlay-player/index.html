@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Teste B6.1 - Overlay Player</title>
+  <style>
+    body { background-color: #1a1a1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    /* Container com proporção de tela padrão (ex: 16:9) */
+    #player-container { width: 800px; height: 450px; background-color: #000; border: 2px solid #333; }
+  </style>
+</head>
+<body>
+
+  <div id="player-container"></div>
+
+  <script type="module">
+    import { OverlayPlayer, Canvas2DRenderStrategy } from './b6_overlay_player.ts';
+
+    // 1. Instancia o player passando o ID da div e a estratégia Canvas2D
+    const player = new OverlayPlayer('player-container', new Canvas2DRenderStrategy());
+
+    // 2. Conecta a um vídeo de teste (pode ser um .mp4 local ou URL pública)
+    // Usando um vídeo de teste genérico para simular o stream
+    player.connectStream('https://www.w3schools.com/html/mov_bbb.mp4');
+
+    // 3. Injeta metadados falsos (Mock) para testar a renderização
+    player.updateMetadata({
+      boxes: [
+        { id: 'b1', x: 0.2, y: 0.3, width: 0.15, height: 0.4, label: 'Pessoa (98%)', color: '#00FF00' },
+        { id: 'b2', x: 0.6, y: 0.5, width: 0.1, height: 0.2, label: 'Mochila', color: '#FFFF00' }
+      ],
+      zones: [
+        { 
+          zone_id: 'z1', name: 'Área Restrita', type: 'DANGER', color: '#FF0000',
+          points: [{ x: 0.1, y: 0.1 }, { x: 0.4, y: 0.1 }, { x: 0.3, y: 0.8 }, { x: 0.1, y: 0.8 }]
+        }
+      ]
+    });
+  </script>
+</body>
+</html>
