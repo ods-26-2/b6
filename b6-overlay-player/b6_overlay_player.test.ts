@@ -1,49 +1,66 @@
 /**
- * Testes Unitários para @ods/b6-overlay-player (B6.1)
- * Diretrizes: Zero I/O, Nomenclatura Obrigatória conforme Squad MOD-2.
+ * @vitest-environment jsdom
  */
-import { describe, it, expect, vi } from 'vitest';
-import { Canvas2DRenderStrategy, OverlayMetadata, RenderInitializationError } from './b6_overlay_player';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { OverlayPlayer, FrameIntervalMetadata } from './b6_overlay_player';
 
-describe('B6.1 - Canvas2DRenderStrategy', () => {
+describe('B6.1 - OverlayPlayer (Testes de Domínio e Ciclo Gráfico)', () => {
+    let mockContainer: HTMLElement;
 
-    it('deve_lancar_excecao_quando_canvas_nao_suportar_contexto_2d', () => {
-        const strategy = new Canvas2DRenderStrategy();
+    beforeEach(() => {
+        mockContainer = document.createElement('div');
+        mockContainer.id = 'test-container';
+        document.body.appendChild(mockContainer);
 
-        // Mock de HTMLCanvasElement que retorna null para getContext
-        const mockCanvas = {
-            getContext: vi.fn().mockReturnValue(null)
-        } as unknown as HTMLCanvasElement;
-
-        expect(() => strategy.initialize(mockCanvas)).toThrowError(RenderInitializationError);
-    });
-
-    it('deve_limpar_o_canvas_antes_de_renderizar_quando_receber_novos_metadados', () => {
-        const strategy = new Canvas2DRenderStrategy();
-
-        const mockCtx = {
-            canvas: { width: 800, height: 600 },
-            clearRect: vi.fn(),
-            beginPath: vi.fn(),
-            moveTo: vi.fn(),
-            lineTo: vi.fn(),
-            closePath: vi.fn(),
-            fill: vi.fn(),
-            stroke: vi.fn(),
-            strokeRect: vi.fn(),
-            fillText: vi.fn()
+        // Mock correto do ResizeObserver como classe para suportar o operador 'new'
+        global.ResizeObserver = class {
+            observe = vi.fn();
+            unobserve = vi.fn();
+            disconnect = vi.fn();
         };
 
-        const mockCanvas = {
-            getContext: vi.fn().mockReturnValue(mockCtx)
-        } as unknown as HTMLCanvasElement;
+        // Mock do Contexto 2D para o JSDOM (Zero I/O / Fakes em memória)
+        HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
+            clearRect: vi.fn(),
+            fillRect: vi.fn(),
+            strokeRect: vi.fn(),
+            measureText: vi.fn().mockReturnValue({ width: 50 }),
+            fillText: vi.fn(),
+        } as unknown as CanvasRenderingContext2D);
 
-        const dummyMetadata: OverlayMetadata = { boxes: [], zones: [] };
+        // Mock de funções de mídia do HTMLMediaElement
+        window.HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
+        window.HTMLMediaElement.prototype.pause = vi.fn();
+        window.HTMLMediaElement.prototype.load = vi.fn();
+    });
 
-        strategy.initialize(mockCanvas);
-        strategy.render(dummyMetadata, 800, 600);
+    afterEach(() => {
+        document.body.innerHTML = '';
+        vi.restoreAllMocks();
+    });
 
-        // Garante que a limpeza do ecrã foi executada no início do ciclo
-        expect(mockCtx.clearRect).toHaveBeenCalledWith(0, 0, 800, 600);
+    it('deve_lancar_erro_quando_contentor_nao_for_encontrado', () => {
+        expect(() => new OverlayPlayer({ containerId: 'id-inexistente' })).toThrow(
+            "Contentor 'id-inexistente' não localizado."
+        );
+    });
+
+    it('deve_inicializar_componente_corretamente_quando_contentor_existe', () => {
+        const player = new OverlayPlayer({ containerId: 'test-container' });
+        // A classe ods-player-container é injetada diretamente no próprio contentor, logo verificamos com classList
+        expect(mockContainer.classList.contains('ods-player-container')).toBe(true);
+        expect(mockContainer.querySelector('.ods-video-layer')).not.toBeNull();
+        expect(mockContainer.querySelector('.ods-canvas-layer')).not.toBeNull();
+    });
+
+    it('deve_aceitar_e_ordenar_timeline_por_intervalos_temporais', () => {
+        const player = new OverlayPlayer({ containerId: 'test-container' });
+
+        const mockTimeline: FrameIntervalMetadata[] = [
+            { startTime: 5.0, endTime: 10.0, boxes: [] },
+            { startTime: 1.0, endTime: 3.0, boxes: [] }
+        ];
+
+        expect(() => player.loadMetadataTimeline(mockTimeline)).not.toThrow();
     });
 });

@@ -1,41 +1,67 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
+
 <head>
   <meta charset="UTF-8">
-  <title>Teste B6.1 - Overlay Player</title>
+  <title>Teste Overlay Player B6.1</title>
   <style>
-    body { background-color: #1a1a1a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    /* Container com proporção de tela padrão (ex: 16:9) */
-    #player-container { width: 800px; height: 450px; background-color: #000; border: 2px solid #333; }
+    body {
+      background-color: #222;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 30px;
+      margin: 0;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
   </style>
 </head>
+
 <body>
 
-  <div id="player-container"></div>
+  <div class="header">
+    <h2>Sincronização de Overlay (Quadro Correto)</h2>
+    <p style="color: #aaa; font-size: 14px;">As marcações acompanham os segundos exatos do clipe reproduzido.</p>
+  </div>
+
+  <div id="ods-stream-container"></div>
 
   <script type="module">
-    import { OverlayPlayer, Canvas2DRenderStrategy } from './b6_overlay_player.ts';
+    import { OverlayPlayer } from './b6_overlay_player.ts';
 
-    // 1. Instancia o player passando o ID da div e a estratégia Canvas2D
-    const player = new OverlayPlayer('player-container', new Canvas2DRenderStrategy());
-
-    // 2. Conecta a um vídeo de teste (pode ser um .mp4 local ou URL pública)
-    // Usando um vídeo de teste genérico para simular o stream
-    player.connectStream('https://www.w3schools.com/html/mov_bbb.mp4');
-
-    // 3. Injeta metadados falsos (Mock) para testar a renderização
-    player.updateMetadata({
-      boxes: [
-        { id: 'b1', x: 0.2, y: 0.3, width: 0.15, height: 0.4, label: 'Pessoa (98%)', color: '#00FF00' },
-        { id: 'b2', x: 0.6, y: 0.5, width: 0.1, height: 0.2, label: 'Mochila', color: '#FFFF00' }
-      ],
-      zones: [
-        { 
-          zone_id: 'z1', name: 'Área Restrita', type: 'DANGER', color: '#FF0000',
-          points: [{ x: 0.1, y: 0.1 }, { x: 0.4, y: 0.1 }, { x: 0.3, y: 0.8 }, { x: 0.1, y: 0.8 }]
-        }
-      ]
+    // Inicializa o Player
+    const player = new OverlayPlayer({
+      containerId: 'ods-stream-container',
+      videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+      autoPlay: false
     });
+
+    // Injeta metadados falsos baseados no tempo (Timeline ODS DTO)
+    // Coordenadas normalizadas [0.0 a 1.0]
+    player.loadMetadataTimeline([
+      {
+        startTime: 1.0, // A caixa aparece no segundo 1.0
+        endTime: 4.5,   // E mantém-se visível de forma fluida até ao segundo 4.5
+        boxes: [
+          { id: '1', label: 'Coelho Detetado (ID: A1)', color: '#00FF00', x: 0.1, y: 0.2, width: 0.3, height: 0.6 }
+        ]
+      },
+      {
+        startTime: 5.0, // Aparece no segundo 5.0
+        endTime: 8.0,   // Fica no ecrã até ao segundo 8.0
+        boxes: [
+          { id: '2', label: 'Alerta de Zona Proibida', color: '#FF0000', x: 0.6, y: 0.1, width: 0.2, height: 0.2 }
+        ]
+      }
+    ]);
+
   </script>
 </body>
+
 </html>
