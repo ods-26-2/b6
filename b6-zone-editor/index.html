@@ -19,10 +19,16 @@
     #app-container { 
       width: 800px; 
       height: 450px; 
+      /* IMAGEM DE FUNDO ADICIONADA AQUI */
       background-color: #000; 
+      background-image: url('https://picsum.photos/id/122/800/450');
+      background-size: cover;
+      background-position: center;
       border: 2px solid #555; 
       margin-bottom: 20px; 
       border-radius: 4px;
+      /* Impede que o clique selecione a imagem sem querer */
+      user-select: none;
     }
     
     .controls { 
