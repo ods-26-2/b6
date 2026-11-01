@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <title>Teste B6.3 - Console de Alertas Avançado</title>
+  <style>
+    body { background-color: #121212; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 30px; margin: 0; }
+    #alert-wrapper { width: 600px; height: 500px; margin-bottom: 20px; }
+    .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+    button { padding: 10px; font-weight: bold; cursor: pointer; border: none; border-radius: 4px; background: #333; color: white; transition: 0.2s; }
+    button:hover { background: #444; }
+    
+    #video-mock { width: 600px; height: 100px; background: #000; border: 2px solid #555; border-radius: 4px; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; color: #777; font-family: monospace; font-size: 18px;}
+  </style>
+</head>
+<body>
+  <h2>Console de Alertas + Ações (B6.3)</h2>
+  
+  <div class="controls">
+    <button id="btn-trigger-crit">🚨 Simular Crítico</button>
+    <button id="btn-trigger-warn">⚠️ Simular Aviso</button>
+  </div>
+
+  <!-- Mock do Player de Vídeo B6.1 para mostrar a Opção 2 -->
+  <div id="video-mock">B6.1 Video Player: A aguardar foco...</div>
+
+  <!-- Contentor do Módulo ODS -->
+  <div id="alert-wrapper"></div>
+
+  <script type="module">
+    import { AlertConsole } from './b6_alert_console.ts';
+
+    const videoMock = document.getElementById('video-mock');
+
+    const alertConsole = new AlertConsole({
+      containerId: 'alert-wrapper',
+      onAcknowledge: (id) => {
+        console.log(`Backend API -> Reconhecer Alerta: ${id}`);
+        alertConsole.updateAlertStatus(id, 'ACKNOWLEDGED');
+      },
+      onMute: (id) => {
+        alertConsole.updateAlertStatus(id, 'MUTED');
+      },
+      onClose: (id) => {
+        alertConsole.updateAlertStatus(id, 'CLOSED');
+        alertConsole.removeAlert(id); 
+      },
+      // OPÇÃO 2: Saltar para o Vídeo
+      onFocusTimeline: (id, timestamp) => {
+        const timeStr = new Date(timestamp).toLocaleTimeString('pt-PT');
+        videoMock.innerHTML = `<span style="color: #4CAF50;">Saltou para o vídeo no instante: <b>${timeStr}</b></span>`;
+        videoMock.style.borderColor = '#4CAF50';
+        setTimeout(() => { videoMock.style.borderColor = '#555'; }, 1000);
+      },
+      // OPÇÃO 4: Ação em Massa
+      onAcknowledgeAll: () => {
+        console.log(`Backend API -> Reconhecer TODOS ativos`);
+        alertConsole.acknowledgeAllActiveLocally();
+      }
+    });
+
+    alertConsole.loadAlerts([
+      { id: '1', severity: 'WARNING', message: 'Indivíduo na zona B.', timestamp: Date.now() - 120000, status: 'ACTIVE' },
+      { id: '2', severity: 'CRITICAL', message: 'Intrusão confirmada.', timestamp: Date.now() - 60000, status: 'ACKNOWLEDGED' }
+    ]);
+
+    let counter = 3;
+    document.getElementById('btn-trigger-crit').addEventListener('click', () => {
+      alertConsole.addAlert({ id: `c_${counter++}`, severity: 'CRITICAL', message: 'Invasão Perimetral!', timestamp: Date.now(), status: 'ACTIVE' });
+    });
+    
+    document.getElementById('btn-trigger-warn').addEventListener('click', () => {
+      alertConsole.addAlert({ id: `w_${counter++}`, severity: 'WARNING', message: 'Movimento suspeito.', timestamp: Date.now(), status: 'ACTIVE' });
+    });
+  </script>
+</body>
+</html>

@@ -35,6 +35,16 @@ Os ficheiros HTML permitem testar a interação física (cliques do rato, render
 3. Abra o link fornecido na consola (normalmente `http://localhost:5173/index_player.html`).
 4. **O que testar:** O player reproduz o clipe utilizando controlos customizados encapsulados (Play/Pause, barra de progresso temporal, volume e ecrã inteiro). As caixas de deteção e rótulos acompanham de forma fluida os **intervalos temporais** (`startTime` e `endTime`) injetados via DTO através do método `loadMetadataTimeline()`.
 
+
+### B6.3 - Console de Alertas (Painel de Eventos)
+1. Certifique-se de que o ficheiro `index_alert.html` está configurado com as importações do `b6_alert_console.ts`.
+2. Inicie o servidor Vite:
+   ```bash
+   npx vite
+   ```
+3. Abra a interface no navegador (`http://localhost:5173/index_alert.html`).
+4. **O que testar:** Simule a receção de alertas através do botão correspondente. Teste os fluxos de "Reconhecer", "Silenciar" e "Encerrar", validando na consola do navegador que os eventos estão a ser delegados corretamente sem o painel alterar o seu estado de forma autónoma.
+
 ### B6.2 - ZoneEditor (Editor Interativo)
 1. Certifique-se de que o ficheiro `index.html` está configurado com as importações do `b6_zone_editor.ts`.
 2. Inicie o servidor Vite:
@@ -65,6 +75,9 @@ npx vitest
 * **`b6_overlay_player.test.ts` (B6.1):**
   * Valida o lançamento de exceções rigorosas caso o contentor alvo não seja localizado no DOM.
   * Verifica a correta montagem estrutural do player e a ordenação cronológica de segurança das timelines baseadas em **intervalos temporais** (`startTime` e `endTime`).
+
+* **`b6_alert_console.test.ts` (B6.3):**
+  * **Testes de UI e Delegação:** Valida a renderização dinâmica de cartões de alerta baseados na severidade e garante que as interações disparam estritamente as funções de *callback* (obedecendo ao princípio Zero Regras de Negócio).
 
 * **`b6_zone_editor.test.ts` (B6.2):**
   * **Testes de Domínio:** Valida matematicamente que polígonos cruzados (em forma de "gravata") são rejeitados pelo sistema antes da exportação.
@@ -125,3 +138,39 @@ A classe `ZoneEditor` gere a tela de desenho vetorial (Canvas) para definir áre
 * **`clearAll()`**
   * **Recebe:** Nenhum parâmetro (`void`).
   * **Retorna:** `void`. Limpa imediatamente todas as zonas da memória e apaga a tela, devolvendo um estado virgem ao editor.
+
+
+---
+
+### 🚨 B6.3 - AlertConsole (`b6_alert_console.ts`)
+A classe `AlertConsole` atua como um painel visual passivo para exibição de eventos de segurança. Ela não retém lógica de negócio, comunicando ações do utilizador de volta ao Backend/Serviço através de *callbacks*. **Inclui Filtros Rápidos e Ações em Massa (Bulk).**
+
+* **`new AlertConsole(options)`**
+  * **Recebe:** `options: AlertConsoleOptions` - Objeto contendo:
+    * `containerId` (string): O ID da div de destino.
+    * `onAcknowledge` (função, opcional): Callback chamado ao clicar em "Reconhecer". Recebe o `alertId`.
+    * `onMute` (função, opcional): Callback chamado ao clicar em "Silenciar". Recebe o `alertId`.
+    * `onClose` (função, opcional): Callback chamado ao clicar em "Encerrar". Recebe o `alertId`.
+    * `onFocusTimeline` (função, opcional): Callback chamado ao clicar em "⏱️ Ver no Vídeo". Retorna ao Backend o `alertId` e o `timestamp` para interligação com o player B6.1.
+    * `onAcknowledgeAll` (função, opcional): Callback disparado pelo botão global "Reconhecer Todos".
+  * **Retorna:** Instância `AlertConsole`.
+
+* **`acknowledgeAllActiveLocally()`**
+  * **Recebe:** Nenhum parâmetro (`void`).
+  * **Retorna:** `void`. Método utilitário para o frontend marcar visualmente todos os alertas 'ACTIVE' como 'ACKNOWLEDGED' instantaneamente após receber sucesso da API, evitando chamadas de atualização um a um.
+
+* **`loadAlerts(alerts)`**
+  * **Recebe:** `alerts: AlertPayload[]` - Lista inicial completa de eventos.
+  * **Retorna:** `void`. Substitui os alertas atuais e re-renderiza o painel.
+
+* **`addAlert(alert)`**
+  * **Recebe:** `alert: AlertPayload` - Objeto do novo alerta (`id, severity, message, timestamp, status`).
+  * **Retorna:** `void`. Injeta e renderiza o novo alerta dinamicamente.
+
+* **`removeAlert(alertId)`**
+  * **Recebe:** `alertId: string`.
+  * **Retorna:** `void`. Remove o alerta da interface visual permanentemente.
+
+* **`updateAlertStatus(alertId, status)`**
+  * **Recebe:** `alertId` (string) e `status` (string: `'ACTIVE' | 'ACKNOWLEDGED' | 'MUTED' | 'CLOSED'`).
+  * **Retorna:** `void`. Altera a aparência do alerta com base no seu novo ciclo de vida definido pelo backend.
