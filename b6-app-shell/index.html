@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <title>Teste B6.4 - App Shell ODS</title>
+  <style>
+    body { margin: 0; padding: 0; }
+    /* A reset de CSS necessário para a shell ocupar 100vh */
+  </style>
+</head>
+<body>
+  <!-- Onde a casca inteira será injetada -->
+  <div id="root-app"></div>
+
+  <script type="module">
+    import { AppShell } from './b6_app_shell.ts';
+
+    // 1. Instanciação da Casca Base
+    const shell = new AppShell({
+      containerId: 'root-app',
+      appName: 'A1 - Inspeção Industrial ODS',
+      initialTheme: 'DARK',
+      onThemeToggle: (theme) => console.log('Tema alterado pelo utilizador para:', theme),
+      onNavClick: (routeId) => {
+        console.log('Navegação solicitada para:', routeId);
+        renderPage(routeId);
+      }
+    });
+
+    // 2. Configuração de Navegação
+    shell.setNavItems([
+      { id: 'dashboard', label: 'Dashboard', icon: '📊', isActive: true },
+      { id: 'cameras', label: 'Câmaras (B6.1)', icon: '📹' },
+      { id: 'zones', label: 'Editor de Zonas (B6.2)', icon: '✏️' },
+      { id: 'alerts', label: 'Alertas (B6.3)', icon: '🚨' }
+    ]);
+
+    // 3. Simulação de Receção de Status de Hardware do Backend
+    setInterval(() => {
+      shell.updateJetsonStatus({
+        isOnline: true,
+        cpuLoad: Math.floor(Math.random() * 40) + 10,
+        gpuLoad: Math.floor(Math.random() * 80) + 20,
+        ramUsage: 65,
+        temperature: Math.floor(Math.random() * 15) + 45
+      });
+    }, 2000);
+
+    // 4. Injeção de Conteúdo na Área Principal (Simulação de Router)
+    function renderPage(routeId) {
+      const mainContent = shell.getMainContainer();
+      mainContent.innerHTML = `
+        <h2 style="margin-top:0;">Página atual: ${routeId.toUpperCase()}</h2>
+        <p>A área de conteúdo principal isolada do layout. Aqui a aplicação instanciará os módulos B6.1, B6.2 ou S5 conforme necessário.</p>
+      `;
+    }
+    
+    // Inicia a primeira página
+    renderPage('dashboard');
+  </script>
+</body>
+</html>
