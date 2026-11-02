@@ -1,6 +1,6 @@
 # Guia de Desenvolvimento e Execução - Kit B6 (Módulo MOD-2)
 
-Este repositório contém a implementação dos submódulos de interface **B6.1 (OverlayPlayer)** e **B6.2 (ZoneEditor)**, responsáveis pela renderização gráfica acelerada e edição topológica vetorial do ecossistema ODS.
+Este repositório contém a implementação dos submódulos de interface **B6.1 (OverlayPlayer)**, **B6.2 (ZoneEditor)**, **B6.3 (AlertConsole)** e **B6.4 (AppShell)**, responsáveis pela renderização gráfica acelerada, edição topológica vetorial, feed reativo e estruturação de layout do ecossistema ODS.
 
 ## 🛠️ Pré-requisitos e Configuração Inicial
 
@@ -26,24 +26,29 @@ Na raiz do seu diretório (`~/MOD2_ODS/mod2`), execute os seguintes comandos:
 
 Os ficheiros HTML permitem testar a interação física (cliques do rato, renderização a 60 FPS e sobreposição de vídeo) no navegador.
 
+### Exemplo integrado - Componentes B6 em abas
+
+O ficheiro `example/index.html` reúne os módulos B6.1, B6.2 e B6.3 numa única interface, com a navegação, o tema e o estado da Jetson fornecidos pela AppShell (B6.4). Cada módulo é apresentado numa aba própria.
+
+1. Na raiz do repositório, inicie o servidor Vite:
+   ```bash
+   npx vite
+   ```
+2. Abra `http://localhost:5173/example/` no navegador.
+3. Use as abas ou a navegação lateral para alternar entre:
+   * **Player (B6.1):** vídeo com caixas de deteção sincronizadas com a timeline.
+   * **Editor de zonas (B6.2):** desenhe, edite, exporte ou limpe zonas.
+   * **Alertas (B6.3):** simule alertas e teste os filtros e as ações.
+   * **Visão geral:** resumo da integração.
+
 ### B6.1 - OverlayPlayer (Visualizador e Sincronização por Intervalos)
-1. Certifique-se de que o ficheiro `index_player.html` está configurado para importar o `b6_overlay_player.ts`.
+1. Certifique-se de que o ficheiro `index.html` está configurado para importar o `b6_overlay_player.ts`.
 2. Inicie o servidor Vite:
    ```bash
    npx vite
    ```
-3. Abra o link fornecido na consola (normalmente `http://localhost:5173/index_player.html`).
+3. Abra o link fornecido na consola (normalmente `http://localhost:5173`).
 4. **O que testar:** O player reproduz o clipe utilizando controlos customizados encapsulados (Play/Pause, barra de progresso temporal, volume e ecrã inteiro). As caixas de deteção e rótulos acompanham de forma fluida os **intervalos temporais** (`startTime` e `endTime`) injetados via DTO através do método `loadMetadataTimeline()`.
-
-
-### B6.3 - Console de Alertas (Painel de Eventos)
-1. Certifique-se de que o ficheiro `index_alert.html` está configurado com as importações do `b6_alert_console.ts`.
-2. Inicie o servidor Vite:
-   ```bash
-   npx vite
-   ```
-3. Abra a interface no navegador (`http://localhost:5173/index_alert.html`).
-4. **O que testar:** Simule a receção de alertas através do botão correspondente. Teste os fluxos de "Reconhecer", "Silenciar" e "Encerrar", validando na consola do navegador que os eventos estão a ser delegados corretamente sem o painel alterar o seu estado de forma autónoma.
 
 ### B6.2 - ZoneEditor (Editor Interativo)
 1. Certifique-se de que o ficheiro `index.html` está configurado com as importações do `b6_zone_editor.ts`.
@@ -58,34 +63,58 @@ Os ficheiros HTML permitem testar a interação física (cliques do rato, render
    * **Adicionar:** Passe o rato na linha da aresta (ficará branca), clique esquerdo e puxe para criar um novo vértice.
    * **Apagar:** Clique direito sobre um ponto ou sobre o corpo da zona para excluí-los (com validação anti-cruzamento).
 
+### B6.3 - Console de Alertas (Painel de Eventos)
+1. Certifique-se de que o ficheiro `index.html` está configurado com as importações do `b6_alert_console.ts`.
+2. Inicie o servidor Vite:
+   ```bash
+   npx vite
+   ```
+3. Abra a interface no navegador (`http://localhost:5173/`).
+4. **O que testar:** Simule a receção de alertas através do botão correspondente. Teste os fluxos de "Reconhecer", "Silenciar" e "Encerrar", validando na consola do navegador que os eventos estão a ser delegados corretamente sem o painel alterar o seu estado de forma autónoma.
+
+### B6.4 - AppShell (Casca de Aplicação)
+1. Certifique-se de que o ficheiro `index.html` está configurado com as importações do `b6_app_shell.ts`.
+2. Inicie o servidor Vite:
+   ```bash
+   npx vite
+   ```
+3. Abra a interface no navegador.
+4. **O que testar:** Valide a injeção do Design System, transição de temas (Dark/Light Mode), menu de navegação e atualização dinâmica das métricas da Jetson Orin Nano.
+
 ---
 
-## 🧪 Executar a Suíte de Testes Unitários (TDD)
+## 🧪 B4 - Testes, Cenários e Integração (Frente Transversal)
 
-Os testes automatizados cobrem as regras críticas de domínio, o motor de validação topológica (`PolygonValidator`) e as exceções da arquitetura. 
+Em conformidade com a frente transversal **B4 (Testes e cenários)** do ecossistema ODS, este repositório implementa a verificação estrutural e de contrato da Camada 4 (Interface), garantindo o princípio de *Zero Regras de Negócio*.
 
-Para correr os testes de **ambos os módulos simultaneamente**, execute:
+Os testes automatizados cobrem as regras críticas de domínio visual, renderização, delegação de eventos via callbacks e exceções da arquitetura.
+
+Para correr a suíte de validação de **todos os submódulos B6 simultaneamente**, execute:
 
 ```bash
 npx vitest
 ```
 
-### O que cada teste valida:
+### O que cada teste valida (Garantia de Contrato B4):
 
 * **`b6_overlay_player.test.ts` (B6.1):**
   * Valida o lançamento de exceções rigorosas caso o contentor alvo não seja localizado no DOM.
   * Verifica a correta montagem estrutural do player e a ordenação cronológica de segurança das timelines baseadas em **intervalos temporais** (`startTime` e `endTime`).
 
+* **`b6_zone_editor.test.ts` (B6.2):**
+  * **Testes de Domínio Visual:** Valida matematicamente que polígonos cruzados (em forma de "gravata") são rejeitados pelo sistema antes da exportação.
+  * **Testes de Estado:** Utilizando fakes de DOM em memória (`jsdom`), garante que sequências complexas de cliques criam, movem e excluem dados de forma segura, respeitando sempre o formato de saída normalizado `[0.0, 1.0]`.
+
 * **`b6_alert_console.test.ts` (B6.3):**
   * **Testes de UI e Delegação:** Valida a renderização dinâmica de cartões de alerta baseados na severidade e garante que as interações disparam estritamente as funções de *callback* (obedecendo ao princípio Zero Regras de Negócio).
 
-* **`b6_zone_editor.test.ts` (B6.2):**
-  * **Testes de Domínio:** Valida matematicamente que polígonos cruzados (em forma de "gravata") são rejeitados pelo sistema antes da exportação.
-  * **Testes de Estado:** Utilizando fakes de DOM em memória (`jsdom`), garante que sequências complexas de cliques criam, movem e excluem dados de forma segura, respeitando sempre o formato de saída normalizado `[0.0, 1.0]`.
+* **`b6_app_shell.test.ts` (B6.4):**
+  * **Testes de Estrutura e Temas:** Valida a injeção do Design System, a montagem estrutural, a alternância de temas (Dark/Light Mode) e as atualizações do painel de hardware da Jetson.
 
-### Dica de Desenvolvimento
-Para manter os testes a correr continuamente em segundo plano (Watch Mode) enquanto escreve código, basta deixar o comando `npx vitest` em execução no terminal. O sistema irá relatar falhas e sucessos em tempo real a cada ficheiro guardado.
+### Integração Contínua e Watch Mode
+Para manter a integração contínua local em andamento enquanto escreve código — uma prática exigida pela frente B4 —, deixe o comando `npx vitest` em execução no terminal. O sistema irá relatar falhas de contrato em tempo real a cada modificação nos ficheiros.
 
+---
 
 ## 📖 Referência da API (Como utilizar as funções)
 
@@ -139,7 +168,6 @@ A classe `ZoneEditor` gere a tela de desenho vetorial (Canvas) para definir áre
   * **Recebe:** Nenhum parâmetro (`void`).
   * **Retorna:** `void`. Limpa imediatamente todas as zonas da memória e apaga a tela, devolvendo um estado virgem ao editor.
 
-
 ---
 
 ### 🚨 B6.3 - AlertConsole (`b6_alert_console.ts`)
@@ -155,22 +183,35 @@ A classe `AlertConsole` atua como um painel visual passivo para exibição de ev
     * `onAcknowledgeAll` (função, opcional): Callback disparado pelo botão global "Reconhecer Todos".
   * **Retorna:** Instância `AlertConsole`.
 
+* **`loadAlerts(alerts)`**, **`addAlert(alert)`**, **`removeAlert(alertId)`**, **`updateAlertStatus(alertId, status)`**
+  * *Mantêm a assinatura original para gestão CRUD de renderização.*
+
 * **`acknowledgeAllActiveLocally()`**
   * **Recebe:** Nenhum parâmetro (`void`).
   * **Retorna:** `void`. Método utilitário para o frontend marcar visualmente todos os alertas 'ACTIVE' como 'ACKNOWLEDGED' instantaneamente após receber sucesso da API, evitando chamadas de atualização um a um.
 
-* **`loadAlerts(alerts)`**
-  * **Recebe:** `alerts: AlertPayload[]` - Lista inicial completa de eventos.
-  * **Retorna:** `void`. Substitui os alertas atuais e re-renderiza o painel.
+---
 
-* **`addAlert(alert)`**
-  * **Recebe:** `alert: AlertPayload` - Objeto do novo alerta (`id, severity, message, timestamp, status`).
-  * **Retorna:** `void`. Injeta e renderiza o novo alerta dinamicamente.
+### 🖥️ B6.4 - AppShell (`b6_app_shell.ts`)
+A classe `AppShell` é o pacote de layout principal que engloba a estrutura de uma aplicação ODS, gerindo o "Design System", "Dark Mode", navegação lateral e um painel reativo do estado do hardware da NVIDIA Jetson.
 
-* **`removeAlert(alertId)`**
-  * **Recebe:** `alertId: string`.
-  * **Retorna:** `void`. Remove o alerta da interface visual permanentemente.
+* **`new AppShell(options)`**
+  * **Recebe:** `options: AppShellOptions` - Objeto contendo:
+    * `containerId` (string): ID da div raiz, geralmente que ocupe todo o ecrã (`body`).
+    * `appName` (string): Título da aplicação a apresentar no cabeçalho.
+    * `initialTheme` (string, opcional): `'DARK' | 'LIGHT'`.
+    * `onThemeToggle` (função, opcional): Notifica a aplicação se o utilizador mudou de tema.
+    * `onNavClick` (função, opcional): Callback acionado com o `routeId` quando o utilizador clica numa opção da barra lateral.
+  * **Retorna:** Instância `AppShell`.
 
-* **`updateAlertStatus(alertId, status)`**
-  * **Recebe:** `alertId` (string) e `status` (string: `'ACTIVE' | 'ACKNOWLEDGED' | 'MUTED' | 'CLOSED'`).
-  * **Retorna:** `void`. Altera a aparência do alerta com base no seu novo ciclo de vida definido pelo backend.
+* **`setNavItems(items)`**
+  * **Recebe:** `items: NavItem[]` - Lista de itens da barra lateral (ex: `{ id: 'cameras', label: 'Câmaras', icon: '📹' }`).
+  * **Retorna:** `void`.
+
+* **`updateJetsonStatus(status)`**
+  * **Recebe:** `status: JetsonStatus` - Métricas recolhidas pelo backend (`cpuLoad`, `gpuLoad`, `ramUsage`, `temperature`, `isOnline`).
+  * **Retorna:** `void`. Atualiza o painel inferior instantaneamente.
+
+* **`getMainContainer()`**
+  * **Recebe:** Nenhum parâmetro (`void`).
+  * **Retorna:** `HTMLDivElement`. Devolve a referência nativa da `div` da área principal, para que a aplicação possa injetar nela (fazer renderização de rota) instâncias dos módulos **B6.1, B6.2 ou B6.3**.
